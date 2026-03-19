@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Live Ratings Viewer</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f6f8;
+      margin: 0;
+      padding: 12px;
+      color: #222;
+    }
+
+    .container {
+      max-width: 1900px;
+      margin: auto;
+      background: #fff;
+      padding: 12px;
+      border-radius: 14px;
+      box-shadow: 0 4px 18px rgba(0,0,0,0.08);
+    }
+
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 28px;
+    }
+
+    .live-info {
+      text-align: right;
+      font-size: 14px;
+      color: #444;
+    }
+
+    .badge {
+      display: inline-block;
+      background: #eaf7ee;
+      color: #188038;
+      font-weight: bold;
+      padding: 6px 12px;
+      border-radius: 999px;
+      margin-bottom: 6px;
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      min-width: 1850px;
+      border-collapse: collapse;
+    }
+
+    th, td {
+      border: 1px solid #c9d1d9;
+      padding: 12px 14px;
+      text-align: center;
+      vertical-align: middle;
+      font-size: 15px;
+    }
+
+    th {
+      background: #2874dc;
+      color: white;
+      font-size: 16px;
+      font-weight: bold;
+    }
+
+    td:first-child,
+    td:nth-child(2),
+    td:nth-child(3) {
+      text-align: left;
+    }
+
+    tbody tr:nth-child(even) {
+      background: #f9fbff;
+    }
+
+    tbody tr:hover {
+      background: #eef4ff;
+    }
+
+    .reviewer-name {
+      font-weight: bold;
+    }
+
+    .action-btn {
+      background: #1a73e8;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 8px 14px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .action-btn:hover {
+      background: #155ec0;
+    }
+
+    .empty,
+    .loading,
+    .error {
+      padding: 20px;
+      font-size: 16px;
+    }
+
+    .error {
+      color: #d93025;
+    }
+
+    .loading {
+      color: #444;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="top-bar">
+      <h1>Ratings Viewer</h1>
+      <div class="live-info">
+        
+        <div id="lastUpdated">Loading...</div>
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <div id="output" class="loading">Loading data...</div>
+    </div>
+  </div>
+
+  <script>
+    const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwbDDQVoaIErsuddgyiNaR4UvcNgCIh7dnDcNLZbl9Qfg4DMmIVl-ihX_dQHlyVpR-1Hg/exec";
+
+    async function loadRatings() {
+      const output = document.getElementById("output");
+
+      try {
+        const response = await fetch(WEB_APP_URL + "?action=list&_=" + Date.now());
+        const result = await response.json();
+
+        if (result.status !== "success") {
+          output.innerHTML = `<div class="error">Failed to load data.</div>`;
+          updateTime();
+          return;
+        }
+
+        const submissions = Array.isArray(result.data) ? result.data : [];
+
+        if (!submissions.length) {
+          output.innerHTML = `<div class="empty">No saved evaluations found.</div>`;
+          updateTime();
+          return;
+        }
+
+        const tableHtml = `
+          <table>
+            <thead>
+              <tr>
+                <th>Reviewer</th>
+                <th>Project Title</th>
+                <th>Date</th>
+                <th>Cristian Keneth Costorio</th>
+                <th>Manny Merino</th>
+                <th>Adrian Bernales</th>
+                <th>Ronalyn Pitogo</th>
+                <th>Josephine Bedon</th>
+                <th>Sherie Pearl De Paz</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${submissions.map((entry, index) => {
+                const members = entry.ratingsData && entry.ratingsData.members
+                  ? entry.ratingsData.members
+                  : [];
+
+                const totalMap = {};
+                members.forEach(member => {
+                  totalMap[member.name] = member.total ?? 0;
+                });
+
+                return `
+                  <tr>
+                    <td class="reviewer-name">${escapeHtml(entry.reviewer || "")}</td>
+                    <td>${escapeHtml(entry.title || "")}</td>
+                    <td>${formatDate(entry.date)}</td>
+                    <td>${escapeHtml(String(totalMap["Cristian Keneth Costorio"] ?? 0))}</td>
+                    <td>${escapeHtml(String(totalMap["Manny Merino"] ?? 0))}</td>
+                    <td>${escapeHtml(String(totalMap["Adrian Bernales"] ?? 0))}</td>
+                    <td>${escapeHtml(String(totalMap["Ronalyn Pitogo"] ?? 0))}</td>
+                    <td>${escapeHtml(String(totalMap["Josephine Bedon"] ?? 0))}</td>
+                    <td>${escapeHtml(String(totalMap["Sherie Pearl De Paz"] ?? 0))}</td>
+                    <td>
+                      <button class="action-btn" onclick="goToDetails(${index})">
+                        View Details
+                      </button>
+                    </td>
+                  </tr>
+                `;
+              }).join("")}
+            </tbody>
+          </table>
+        `;
+
+        output.innerHTML = tableHtml;
+        updateTime();
+      } catch (error) {
+        output.innerHTML = `<div class="error">Error loading data.</div>`;
+        console.error(error);
+        updateTime();
+      }
+    }
+
+    function goToDetails(index) {
+      window.location.href = "details.html?index=" + encodeURIComponent(index);
+    }
+
+    function updateTime() {
+      const now = new Date();
+      document.getElementById("lastUpdated").textContent =
+        "Last updated: " + now.toLocaleString();
+    }
+
+    function formatDate(value) {
+      if (!value) return "";
+      const d = new Date(value);
+      if (isNaN(d.getTime())) {
+        return escapeHtml(String(value));
+      }
+      return d.toLocaleDateString();
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    loadRatings();
+    setInterval(loadRatings, 5000);
+  </script>
+</body>
+</html>

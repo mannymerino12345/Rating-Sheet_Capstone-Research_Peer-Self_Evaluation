@@ -124,8 +124,8 @@
       color: #444;
     }
 
-    /* Passcode overlay */
-    .auth-overlay {
+    /* Verification screen */
+    #verificationScreen {
       position: fixed;
       inset: 0;
       background: rgba(0, 0, 0, 0.45);
@@ -136,88 +136,84 @@
       padding: 16px;
     }
 
-    .auth-box {
+    .verify-box {
       width: 100%;
-      max-width: 400px;
+      max-width: 380px;
       background: #fff;
-      border-radius: 16px;
       padding: 24px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.18);
+      border-radius: 14px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.15);
       text-align: center;
     }
 
-    .auth-box h2 {
+    .verify-box h2 {
       margin-top: 0;
       margin-bottom: 10px;
     }
 
-    .auth-box p {
+    .verify-box p {
       margin-bottom: 16px;
       color: #555;
     }
 
-    .auth-box input {
+    .verify-box input {
       width: 100%;
       box-sizing: border-box;
       padding: 12px;
       font-size: 16px;
       border: 1px solid #c9d1d9;
-      border-radius: 10px;
+      border-radius: 8px;
       margin-bottom: 12px;
       text-align: center;
     }
 
-    .auth-box button {
+    .verify-box button {
       width: 100%;
       padding: 12px;
-      font-size: 16px;
-      font-weight: bold;
       border: none;
-      border-radius: 10px;
+      border-radius: 8px;
       background: #2874dc;
       color: white;
+      font-size: 16px;
+      font-weight: bold;
       cursor: pointer;
     }
 
-    .auth-box button:hover {
+    .verify-box button:hover {
       background: #155ec0;
     }
 
-    .auth-error {
-      margin-top: 10px;
+    .verify-error {
       color: #d93025;
       font-size: 14px;
-      min-height: 20px;
+      min-height: 18px;
+      margin-top: 10px;
     }
 
-    .hidden {
-      display: none !important;
-    }
-
-    #appContent {
+    #mainContent {
       display: none;
     }
   </style>
 </head>
 <body>
-  <!-- Passcode Screen -->
-  <div id="authOverlay" class="auth-overlay">
-    <div class="auth-box">
-      <h2>Enter Verification Code</h2>
-      <p>Please enter the code to open the viewer.</p>
+  <!-- Verification Screen -->
+  <div id="verificationScreen">
+    <div class="verify-box">
+      <h2>Verification Required</h2>
+      <p>Enter the code to open this page.</p>
       <input
         type="password"
-        id="passcodeInput"
+        id="verifyCodeInput"
         placeholder="Enter code"
         maxlength="5"
       />
-      <button onclick="checkPasscode()">Open Viewer</button>
-      <div id="authError" class="auth-error"></div>
+      <button onclick="verifyAccess()">Open Viewer</button>
+      <div id="verifyError" class="verify-error"></div>
     </div>
   </div>
 
-  <!-- Main App -->
-  <div id="appContent">
+  <!-- Hidden Main Content -->
+  <div id="mainContent">
     <div class="container">
       <div class="top-bar">
         <h1>Ratings Viewer</h1>
@@ -235,16 +231,15 @@
   <script>
     const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwbDDQVoaIErsuddgyiNaR4UvcNgCIh7dnDcNLZbl9Qfg4DMmIVl-ihX_dQHlyVpR-1Hg/exec";
     const STATIC_CODE = "00000";
-
     let ratingsInterval = null;
 
-    function checkPasscode() {
-      const input = document.getElementById("passcodeInput").value;
-      const errorBox = document.getElementById("authError");
+    function verifyAccess() {
+      const codeInput = document.getElementById("verifyCodeInput").value;
+      const errorBox = document.getElementById("verifyError");
 
-      if (input === STATIC_CODE) {
-        document.getElementById("authOverlay").classList.add("hidden");
-        document.getElementById("appContent").style.display = "block";
+      if (codeInput === STATIC_CODE) {
+        document.getElementById("verificationScreen").style.display = "none";
+        document.getElementById("mainContent").style.display = "block";
 
         loadRatings();
 
@@ -252,13 +247,13 @@
           ratingsInterval = setInterval(loadRatings, 5000);
         }
       } else {
-        errorBox.textContent = "Incorrect code. Please try again.";
+        errorBox.textContent = "Incorrect code.";
       }
     }
 
-    document.getElementById("passcodeInput").addEventListener("keydown", function (e) {
+    document.getElementById("verifyCodeInput").addEventListener("keydown", function (e) {
       if (e.key === "Enter") {
-        checkPasscode();
+        verifyAccess();
       }
     });
 

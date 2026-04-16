@@ -165,6 +165,7 @@
       border-radius: 8px;
       margin-bottom: 12px;
       text-align: center;
+      text-transform: uppercase;
     }
 
     .verify-box button {
@@ -196,7 +197,6 @@
   </style>
 </head>
 <body>
-  <!-- Verification Screen -->
   <div id="verificationScreen">
     <div class="verify-box">
       <h2>Verification Required</h2>
@@ -205,14 +205,13 @@
         type="password"
         id="verifyCodeInput"
         placeholder="Enter code"
-        maxlength="5"
+        maxlength="8"
       />
       <button onclick="verifyAccess()">Open Viewer</button>
       <div id="verifyError" class="verify-error"></div>
     </div>
   </div>
 
-  <!-- Hidden Main Content -->
   <div id="mainContent">
     <div class="container">
       <div class="top-bar">
@@ -230,14 +229,20 @@
 
   <script>
     const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwbDDQVoaIErsuddgyiNaR4UvcNgCIh7dnDcNLZbl9Qfg4DMmIVl-ihX_dQHlyVpR-1Hg/exec";
-    const STATIC_CODE = "08975";
+    
+    // The new PIN "IT-12345" hidden as an array of shifted character codes
+    const _0x1a2b = [80, 91, 52, 56, 57, 58, 59, 60]; 
     let ratingsInterval = null;
 
     function verifyAccess() {
-      const codeInput = document.getElementById("verifyCodeInput").value;
+      // Force uppercase so if they type it-12345 it still works
+      const codeInput = document.getElementById("verifyCodeInput").value.toUpperCase();
       const errorBox = document.getElementById("verifyError");
 
-      if (codeInput === STATIC_CODE) {
+      // Reconstruct the hidden code on the fly
+      const target = _0x1a2b.map(c => String.fromCharCode(c - 7)).join('');
+
+      if (codeInput === target) {
         document.getElementById("verificationScreen").style.display = "none";
         document.getElementById("mainContent").style.display = "block";
 
